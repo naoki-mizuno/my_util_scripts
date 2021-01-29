@@ -74,6 +74,7 @@ def parse_args():
         "--alpha",
         nargs="+",
         default=[1.0],
+        type=float,
         help="alpha for the mesh (applied to all if single arg, each if multiple args)",
     )
     parser.add_argument(
@@ -134,7 +135,7 @@ def make_mesh_marker(file_path, marker_id, args, alpha=None, namespace=""):
         m.color.r = args.color[0]
         m.color.g = args.color[1]
         m.color.b = args.color[2]
-    elif args.random_color:
+    elif args.random_colors:
         m.color.r = np.random.random()
         m.color.g = np.random.random()
         m.color.b = np.random.random()
