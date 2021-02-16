@@ -29,6 +29,11 @@ def parse_args():
         help="files or directories of mesh (searches for *.stl if directory is given)",
     )
     parser.add_argument(
+        "--rosparam",
+        action="store_true",
+        help="treat mesh location argument as ROS param key"
+    )
+    parser.add_argument(
         "-p",
         "--pos",
         default=[0, 0, 0],
@@ -154,6 +159,16 @@ def main():
     rospy.init_node("mesh_marker_pub")
 
     ma = MarkerArray()
+
+    if args.rosparam:
+        if len(args.mesh_path) > 1:
+            raise RuntimeError(
+                "You can only specify one argument when using --rosparam. "
+                "That argument should be the ROS param name of an array that "
+                "contains the mesh file locations."
+            )
+        # Treat as rosparam (useful when calling from a launch file)
+        args.mesh_path = rospy.get_param("~" + args.mesh_path[0])
 
     mesh_fpaths = []
     mesh_id = 0
