@@ -42,14 +42,24 @@ def parse_args():
         metavar=tuple("XYZ"),
         help="x, y, z position (meters)",
     )
-    parser.add_argument(
+    orientation_group = parser.add_mutually_exclusive_group()
+    orientation_group.add_argument(
         "-o",
         "--orientation",
         default=[0, 0, 0],
         type=float,
         nargs=3,
-        metavar=tuple("RPY"),
-        help="roll, pitch, yaw (degrees)",
+        metavar=tuple("YPR"),
+        help="orientation applied in order of yaw, pitch, roll (degrees)",
+    )
+    orientation_group.add_argument(
+        "-q",
+        "--quaternion",
+        default=None,
+        type=float,
+        nargs=4,
+        metavar=tuple("XYZW"),
+        help="quaternion of the orientation",
     )
     parser.add_argument("-f", "--frame", default="world", help="frame ID")
     parser.add_argument(
@@ -125,11 +135,18 @@ def make_mesh_marker(file_path, marker_id, args, alpha=None, namespace=""):
     m.pose.position.y = args.pos[1]
     m.pose.position.z = args.pos[2]
 
-    q = tft.quaternion_from_euler(*np.radians(args.orientation))
-    m.pose.orientation.x = q[0]
-    m.pose.orientation.y = q[1]
-    m.pose.orientation.z = q[2]
-    m.pose.orientation.w = q[3]
+    if args.quaternion:
+        m.pose.orientation.x = args.quaternion[0]
+        m.pose.orientation.y = args.quaternion[1]
+        m.pose.orientation.z = args.quaternion[2]
+        m.pose.orientation.w = args.quaternion[3]
+    else:
+        z, y, x = np.radians(args.orientation)
+        q = tft.quaternion_from_euler(z, y, x, axes="rzyx")
+        m.pose.orientation.x = q[0]
+        m.pose.orientation.y = q[1]
+        m.pose.orientation.z = q[2]
+        m.pose.orientation.w = q[3]
 
     m.scale.x = args.scale
     m.scale.y = args.scale
