@@ -16,6 +16,8 @@ import numpy as np
 import argparse
 from collections import OrderedDict
 import os
+import sys
+import yaml
 
 
 class IMarkerHelper(object):
@@ -135,7 +137,7 @@ class IMarkerHelper(object):
 
 
 def parse_args():
-    description = "publish mesh file as visualization_msgs/Marker"
+    description = "publish mesh file as interactive marker"
     parser = argparse.ArgumentParser(
         description=description,
         add_help=False,
@@ -151,14 +153,21 @@ def parse_args():
         help="path to the mesh file",
     )
     parser.add_argument(
+        "-ipf",
+        "--init-pose-file",
+        dest="init_pose_fpath",
+        metavar="PATH",
+        help="yaml file that contains the initial pose (- for stdin)",
+    )
+    parser.add_argument(
         "-ip",
         "--init-pos",
         dest="init_pos",
-        default=[0, 0, 0],
+        default=None,
         type=float,
         nargs=3,
         metavar=tuple("XYZ"),
-        help="initial x, y, z position (meters)",
+        help="initial x, y, z position (meters). Takes precedence over init-pose-file",
     )
     parser.add_argument(
         "-p",
@@ -299,10 +308,29 @@ def main():
     imarker.header.frame_id = args.frame
     imarker.scale = args.axes_scale
 
-    # Set initial position of the marker
-    imarker.pose.position.x = args.init_pos[0]
-    imarker.pose.position.y = args.init_pos[1]
-    imarker.pose.position.z = args.init_pos[2]
+    if args.init_pose_fpath is not None:
+        # Set initial pose of the marker from a file (or stdin)
+        if args.init_pose_fpath == "-":
+            doc = sys.stdin.read()
+            print("Read initial pose from stdin")
+        else:
+            doc = open(args.init_pose_fpath).read()
+            print("Read initial pose from file")
+        pose = yaml.safe_load(doc)
+        if "position" in pose:
+            imarker.pose.position.x = pose["position"]["x"]
+            imarker.pose.position.y = pose["position"]["y"]
+            imarker.pose.position.z = pose["position"]["z"]
+        if "orientation" in pose:
+            imarker.pose.orientation.x = pose["orientation"]["x"]
+            imarker.pose.orientation.y = pose["orientation"]["y"]
+            imarker.pose.orientation.z = pose["orientation"]["z"]
+            imarker.pose.orientation.w = pose["orientation"]["w"]
+    if args.init_pos is not None:
+        # Set initial position of the marker
+        imarker.pose.position.x = args.init_pos[0]
+        imarker.pose.position.y = args.init_pos[1]
+        imarker.pose.position.z = args.init_pos[2]
     marker.pose = imarker.pose
 
     imarker.controls = [
