@@ -212,6 +212,10 @@ def parse_args():
         help="scaling factor for the axes",
     )
     parser.add_argument(
+        "--publish",
+        help="publish pose to specified topic instead of printing",
+    )
+    parser.add_argument(
         "-c",
         "--color",
         default=None,
@@ -333,6 +337,23 @@ def main():
         imarker.pose.position.z = args.init_pos[2]
     marker.pose = imarker.pose
 
+    if args.publish is not None:
+        topic_name = args.publish
+        if not topic_name.startswith("/"):
+            topic_name = "/" + topic_name
+
+        pub_ps = rospy.Publisher(topic_name, PoseStamped, queue_size=1, latch=True)
+
+    def show_or_publish_pose(pose, args):
+        if args.publish is not None:
+            ps = PoseStamped()
+            ps.header.frame_id = args.frame
+            ps.pose = pose
+
+            pub_ps.publish(ps)
+        else:
+            print("Frame: {}\n{}".format(args.frame, pose))
+
     imarker.controls = [
         IMarkerHelper.make_control(
             "box", markers=[marker], imode="button", is_always_visible=True
@@ -345,8 +366,8 @@ def main():
         OrderedDict(
             [
                 [
-                    "Show Pose",
-                    lambda fb: print("Frame: {}\n{}".format(args.frame, fb.pose)),
+                    "Publish Pose" if args.publish else "Show Pose",
+                    lambda fb: show_or_publish_pose(fb.pose, args),
                 ],
                 [
                     "Rotate 90 degrees (red)",
