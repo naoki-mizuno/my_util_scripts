@@ -40,6 +40,24 @@ against the stl file that represents the environment and see how much they
 differ.
 
 
+### interactive_mesh.py
+
+#### What it does
+
+Publishes a mesh file (stl, obj, and other ROS-supported types) as an
+interactive marker that you can drag and rotate on rviz. Right clicking the
+model opens a menu where you can show (or publish, depending on how you start
+the program) the current pose of the model, rotate the model 90 degrees, and
+reset the orientation to the original.
+
+#### What I use it for
+
+When I have an environment model for motion planning, I often need to specify
+the goal pose of the end effector. For this I use this script to show the
+end effector stl model on rviz and drag/rotate it to where I want the goal to
+be.
+
+
 ### tf_static_from_bag.py
 
 #### What it does
