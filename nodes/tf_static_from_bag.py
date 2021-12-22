@@ -34,6 +34,12 @@ def parse_args():
         help="do not publish as latched topic",
     )
     parser.add_argument(
+        "--no-listen",
+        dest="listen",
+        action="store_false",
+        help="do not listen to transforms that are already published",
+    )
+    parser.add_argument(
         "--topic-in",
         default="/tf_static",
         help="topic to read from the bag file",
@@ -58,8 +64,18 @@ def main():
 
     rospy.init_node("tf_static_from_bag")
 
-    bag_in = rosbag.Bag(args.bag_in)
     tform = TFMessage()
+    if args.listen:
+        rospy.loginfo("Waiting for transforms that are already published")
+        try:
+            timeout = rospy.Duration(1)
+            tform = rospy.wait_for_message("/tf_static", TFMessage, timeout=timeout)
+            fmt = "Found {} static transforms published to /tf_static"
+            rospy.loginfo(fmt.format(len(tform.transforms)))
+        except rospy.exceptions.ROSException:
+            rospy.loginfo("No static transforms recieved".format(len(tform.transforms)))
+
+    bag_in = rosbag.Bag(args.bag_in)
     for topic, msg, t in bag_in.read_messages(topics=[args.topic_in]):
         if hasattr(msg, "transforms"):
             tform.transforms.extend(msg.transforms)
